@@ -96,6 +96,9 @@ public class Transform {
         // 不够再添0
         while (BinaryInt.length() < length) BinaryInt.append("0");
         String res = BinaryInt.reverse().toString();
+        // 如果超出32位范围就 取低32位
+        if (res.length() > length)
+            res = res.substring(res.length()-length);
         // 如果是负数，还需要取反加一
         return isNeg ? NegationAddOne(res) : res;
     }
@@ -317,6 +320,6 @@ public class Transform {
     public static void main(String[] args)
     {
         Transform tf = new Transform();
-        System.out.println(tf.DecimalToBinary("-3"));
+        System.out.println(tf.BinaryToDecimal("10000000000000000000000000000000"));
     }
 }
