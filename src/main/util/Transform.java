@@ -41,7 +41,7 @@ public class Transform {
     /**
      * 取反加一
      */
-    private String NegationAddOne(String BinaryInt)
+    public String NegationAddOne(String BinaryInt)
     {
         return AddOne(Negation(BinaryInt));
     }
@@ -314,6 +314,12 @@ public class Transform {
         for (int i = 0; i < DecimalStr.length(); ++i)
             nbcdStr.append(BinaryForm(DecimalStr.charAt(i)+"",4));
         return nbcdStr.toString();
+    }
+
+
+    public int originCodeValue(String binaryString)
+    {
+        return binaryValue(binaryString);
     }
 
 

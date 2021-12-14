@@ -26,14 +26,12 @@ public class DataType {
         }
     }
 
-    public DataType(int[] data)
-    {
-        if(data.length != length)
+    public DataType(int[] data) {
+        if (data.length != length)
             throw new NumberFormatException(data.length + " != " + length);
-        for (int i = 0; i < data.length; ++i)
-        {
+        for (int i = 0; i < data.length; ++i) {
             int bit = data[i];
-            if(bit != 1 && bit != 0)
+            if (bit != 1 && bit != 0)
                 throw new NumberFormatException(bit + " is not 1 or 0");
             data_int[i] = bit;
             data_char[i] = bit == 1 ? '1' : '0';
@@ -43,6 +41,15 @@ public class DataType {
     public int[] getData_int()
     {
         return data_int;
+    }
+
+    public void setBit(int index, char bit){
+        data_char[index] = bit;
+        data_int[index] = bit - '0';
+    }
+
+    public char getBit(int index){
+        return data_char[index];
     }
 
     @Override
