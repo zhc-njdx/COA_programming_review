@@ -142,4 +142,56 @@ public class FPUTest {
         }
     }
 
+    /**
+     * 浮点数的除法
+     */
+    @Test
+    public void fpuDivTest1(){
+        dest = new DataType(tf.FloatToBinary( "0.4375" ));
+        src = new DataType(tf.FloatToBinary( "0.5" ));
+        result = fpu.div(src, dest);
+        assertEquals(tf.FloatToBinary( "0.875" ), result.toString());
+    }
+
+    @Test
+    public void fpuDivTest2(){
+        dest = new DataType(tf.FloatToBinary( "1.0" ));
+        src = new DataType(tf.FloatToBinary( "4.0" ));
+        result = fpu.div(src, dest);
+        assertEquals(tf.FloatToBinary( "0.25" ), result.toString());
+    }
+
+    @Test
+    public void fpuDivTest3(){
+        dest = new DataType(tf.FloatToBinary( "-2.0" ));
+        src = new DataType(tf.FloatToBinary( "1.0" ));
+        result = fpu.div(src, dest);
+        assertEquals(tf.FloatToBinary( "-2.0" ), result.toString());
+    }
+
+    @Test
+    public void fpuDivTest4(){
+        dest = new DataType(tf.FloatToBinary( "1" ));
+        src = new DataType(tf.FloatToBinary( "-2.0" ));
+        result = fpu.div(src, dest);
+        assertEquals(tf.FloatToBinary( "-0.5" ), result.toString());
+    }
+
+    @Test
+    public void fpuDivTest5(){
+        dest = new DataType(tf.FloatToBinary( "0.4375" ));
+        src = new DataType(tf.FloatToBinary( "0.625" ));
+        result = fpu.div(src, dest);
+        assertEquals(tf.FloatToBinary("0.7"), result.toString());
+    }
+
+    @Test(expected = ArithmeticException.class)
+    public void fpuDivExceptionTest(){
+        dest = new DataType(tf.FloatToBinary( "2.2" ));
+        System.out.println(111);
+        src = new DataType(tf.FloatToBinary( "0.0" ));
+        System.out.println(111);
+        result = fpu.div(src, dest);
+    }
+
 }

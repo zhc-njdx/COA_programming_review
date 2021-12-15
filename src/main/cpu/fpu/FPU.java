@@ -412,10 +412,154 @@ public class FPU {
      * @param src 除数
      * @param dest 被除数
      * @return 商
+     *
+     * 步骤：
+     * 1、边界检查
+     * 2、被除数是0 返回0;除数是0 抛异常
+     * 3、提取阶码(还是注意 00000000 的阶码对应 -126) 并进行运算 res_expo =  dest_expo - src_expo + 127
+     * 4、提取小数 (注意隐藏位是 1 还是 0) 并进行小数的除法
+     * 5、小数的除法步骤(关键)
+     *      发现原来写的小数除法是存在漏洞的，如果商太大(>=2)就表示不了，也不知道那个除法是怎么算对的
+     *      新的除法得到的结果为原来除数被除数长度的两倍
+     *      1、将被除数0扩展
+     *      2、被除数左移(注意可能最高位为1，此时要将这个1记录下来，后面的不够减应该是够减!!!)
+     *      3、减去除数，够减(cf=1)则上商为1,反之上商为0
+     *      4、重复2、3  最后得到的前len位是整数部分，后len位是小数部分
+     *
+     * 6、对结果的情况讨论 基本与乘法类似:
+     *      1、小数全为0---->返回0
+     *      2、阶码为1
+     *      3、阶码大于1
+     *      4、阶码小于1
+     *      (如果是非规格化数 记得将阶码置为0)
      */
     public DataType div(DataType src, DataType dest)
     {
-        return null;
+        String srcStr = src.toString();
+        String destStr = dest.toString();
+
+        // 边界检查
+        String res = cornerCheck(divCorner,srcStr,destStr);
+        if (res != null) return new DataType(res);
+
+        if (srcStr.matches(IEEE754Float.NaN_Regular) || destStr.matches(IEEE754Float.NaN_Regular))
+            return new DataType(IEEE754Float.NaN);
+
+        int res_sign = (srcStr.charAt(0) - '0') ^ (destStr.charAt(0) - '0');
+
+        // 如果src为0 抛异常
+        if (srcStr.substring(1).equals(IEEE754Float.P_ZERO.substring(1)))
+            throw new ArithmeticException();
+        // 如果dest为0 返回0
+        if (destStr.substring(1).equals(IEEE754Float.P_ZERO.substring(1)))
+            return new DataType(res_sign == 1 ? IEEE754Float.N_ZERO : IEEE754Float.P_ZERO);
+
+        // 提取阶码
+        String src_expo = srcStr.substring(1,9);
+        String dest_expo = destStr.substring(1,9);
+        int src_expo_value = src_expo.equals("00000000") ? -126 : Integer.parseInt(src_expo,2) - 127;
+        int dest_expo_value = dest_expo.equals("00000000") ? -126 : Integer.parseInt(dest_expo,2) - 127;
+//        System.out.println(src_expo_value + " " + dest_expo_value);
+        int res_expo_value = dest_expo_value - src_expo_value + 127;
+
+        // 提取小数 并进行小数的除法
+        String src_significant = src_expo.equals("00000000") ? "0" : "1";
+        String dest_significant = dest_expo.equals("00000000") ? "0" : "1";
+        src_significant += srcStr.substring(9) + "000";
+        dest_significant += destStr.substring(9) + "000";
+
+        String res_significant = significant_div(src_significant,dest_significant);
+        System.out.println(res_significant);
+        // 得到54位结果
+        int i = 0;
+        for (; i < res_significant.length(); ++i)
+            if (res_significant.charAt(i) == '1')
+                break;
+        if (i <= 26){
+            res_expo_value += 26 - i;
+            res_significant = rightShift(res_significant,26-i);
+        }
+        res_significant = res_significant.substring(26,53);
+        System.out.println(res_significant);
+//        System.out.println(res_expo_value);
+
+        // 对结果进行处理
+        //1、小数太小 直接返回0
+        if (res_significant.equals("000000000000000000000000000"))
+            return new DataType(res_sign == 1 ? IEEE754Float.P_ZERO : IEEE754Float.N_ZERO);
+        // 阶码为1 小数不为0
+        else if (res_expo_value == 1){
+            // 规格化数 阶码置为0
+            if (res_significant.charAt(0) == '0')
+                res_expo_value = 0;
+        }
+        else if (res_expo_value > 1){
+            // 阶码大于1 隐藏位为0 阶码减1 小数左移
+            while (res_significant.charAt(0) == '0' && res_expo_value > 1){
+                res_expo_value--;
+                res_significant = leftShift(res_significant,1);
+            }
+            // 如果阶码减为1，隐藏位还是0 非规格化数
+            if (res_significant.charAt(0) == '0')
+                res_expo_value = 0;
+            // 如果隐藏位为1 看看阶码是否会太大
+            else if (res_expo_value >= 255)
+                return new DataType(res_sign == 1 ? IEEE754Float.N_INF : IEEE754Float.P_INF);
+        }
+        else {
+            // 阶码太小 小数前27为不全为0 阶码加1 小数右移
+            while (!res_significant.equals("000000000000000000000000000") && res_expo_value < 1){
+                res_expo_value++;
+                res_significant = rightShift(res_significant,1);
+            }
+            // 小数右移成了全0 阶码还是小于等于1 返回0
+            if (res_significant.equals("000000000000000000000000000"))
+                return new DataType(res_sign == 1 ? IEEE754Float.N_ZERO : IEEE754Float.P_ZERO);
+            // 阶码增为1 小数不全为0 非规格化数 阶码置为0
+            else
+                res_expo_value = 0;
+        }
+
+        return new DataType(round1((char)(res_sign+'0'),tf.DecimalToBinary(res_expo_value+"").substring(24),res_significant));
+    }
+
+    public String significant_div(String src, String dest){
+        int len = src.length();
+        int[] src1 = tfh.StringToIntArray(src);
+        int[] dest1 = tfh.StringToIntArray(dest);
+
+        StringBuilder sang = new StringBuilder();
+
+        int[] res = new int[len];
+        Arrays.fill(res,0);
+
+        for (int i = 0; i < len * 2; ++i){
+            // 左移 记录最高位
+            int x = res[0];
+            int destLast = dest1[0];
+            for (int j = 0; j < len - 1; ++j){
+                res[j] = res[j+1];
+                dest1[j] = dest1[j+1];
+            }
+            res[len - 1] = destLast;
+            dest1[len - 1] = 0;
+            // 判断是否res是否够减src1
+            int[] tmp = tfh.addIntArray(src1,res,1);
+            if (tfh.cf == 1){
+                res = tmp;
+                sang.append("1");
+            }
+            else {
+                // 由于左移会将高位的1移走，会导致本来够减变得不够减。
+                if (x == 1){
+                    res = tmp;
+                    sang.append("1");
+                }
+                else
+                    sang.append("0");
+            }
+        }
+        return sang.toString();
     }
 
     /**
@@ -536,5 +680,17 @@ public class FPU {
         }
         String result = new StringBuffer(new String(res)).reverse().toString();
         return "" + (result.charAt(0) == operand.charAt(0) ? '0' : '1') + result;  //注意有进位不等于溢出，溢出要另外判断
+    }
+
+    public static void main(String[] args){
+        Transform tf = new Transform();
+        FPU fpu = new FPU();
+        DataType dest = new DataType(tf.FloatToBinary( "0.4375" ));
+        DataType src = new DataType(tf.FloatToBinary( "0.5" ));
+        DataType result = fpu.div(src, dest);
+        System.out.println("dest: "+dest);
+        System.out.println("src: " + src);
+        System.out.println(result);
+        System.out.println(tf.BinaryToFloat(result.toString()));
     }
 }

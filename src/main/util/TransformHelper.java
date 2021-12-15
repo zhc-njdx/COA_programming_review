@@ -1,5 +1,11 @@
 package util;
 
+import java.util.Arrays;
+
+/**
+ * 放置一些功能函数
+ */
+
 public class TransformHelper {
 
     public int cf;
@@ -29,16 +35,28 @@ public class TransformHelper {
      */
     public int[] addIntArray(int[] src, int[] dest, int sub)
     {
+        int[] src1 = new int[src.length];
+        System.arraycopy(src, 0, src1, 0, src.length);
         int[] res = new int[src.length];
         cf = sub;
         if (sub == 1)
-            for (int i = 0; i < src.length; ++i)
-                src[i] = src[i] == 1 ? 0 : 1;
-        for (int j = src.length - 1; j >= 0; --j)
+            for (int i = 0; i < src1.length; ++i)
+                // 由于src指的是对象  所以这里的修改是永远的
+                // 解决方案  重新new一个数组，将src复制过去
+//                src[i] = src[i] == 1 ? 0 : 1;
+                src1[i] = src1[i] == 1 ? 0 : 1;
+        for (int j = src1.length - 1; j >= 0; --j)
         {
-            res[j] = src[j] ^ dest[j] ^ cf;
-            cf = (src[j] & dest[j]) | (src[j] & cf) | (dest[j] & cf);
+            res[j] = src1[j] ^ dest[j] ^ cf;
+            cf = (src1[j] & dest[j]) | (src1[j] & cf) | (dest[j] & cf);
         }
         return res;
+    }
+
+    public static void main(String[] args){
+        TransformHelper tfh = new TransformHelper();
+        System.out.println(tfh.IntArrayToString(tfh.addIntArray(tfh.StringToIntArray("101000000000000000000000000"),
+                tfh.StringToIntArray("011100000000000000000000000"), 1)));
+        System.out.println(tfh.cf);
     }
 }

@@ -119,6 +119,9 @@ public class Transform {
         // 负数需要先取绝对值
         if(isNeg) value = Math.abs(value);
 
+        if (value == 0.0)
+            return isNeg ? "10000000000000000000000000000000" : "00000000000000000000000000000000";
+
         // 计算浮点数的阶码是多少
         // 得出的 小数部分为 1.******
         int expo = 0;
