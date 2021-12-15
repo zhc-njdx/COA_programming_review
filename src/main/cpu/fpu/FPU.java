@@ -16,6 +16,13 @@ import util.TransformHelper;
 
 import java.util.Arrays;
 
+/**
+ * 第四次作业
+ * 浮点数的加减
+ * 第五次作业
+ * 浮点数的乘除
+ */
+
 public class FPU {
 
     private final String[][] addCorner = new String[][]{
@@ -685,8 +692,8 @@ public class FPU {
     public static void main(String[] args){
         Transform tf = new Transform();
         FPU fpu = new FPU();
-        DataType dest = new DataType(tf.FloatToBinary( "0.4375" ));
-        DataType src = new DataType(tf.FloatToBinary( "0.5" ));
+        DataType dest = new DataType("00111111111000000000000000000000");
+        DataType src = new DataType("00000000010000000000000000000000");
         DataType result = fpu.div(src, dest);
         System.out.println("dest: "+dest);
         System.out.println("src: " + src);
