@@ -1,7 +1,9 @@
-package util;
+package cpu;
 
 import cpu.fpu.FPU;
 import org.junit.Test;
+import util.DataType;
+import util.Transform;
 
 import static org.junit.Assert.assertEquals;
 

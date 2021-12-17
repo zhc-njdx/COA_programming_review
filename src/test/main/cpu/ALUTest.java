@@ -1,8 +1,10 @@
-package util;
+package cpu;
 
 import cpu.alu.ALU;
 import org.junit.Assert;
 import org.junit.Test;
+import util.DataType;
+import util.Transform;
 
 import java.security.PublicKey;
 import java.util.Random;

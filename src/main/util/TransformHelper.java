@@ -53,6 +53,19 @@ public class TransformHelper {
         return res;
     }
 
+    public char[] StringToCharArray(String str){
+        char[] charArray = new char[str.length()];
+        for (int i = 0; i < str.length(); ++i)
+            charArray[i] = str.charAt(i);
+        return charArray;
+    }
+
+    public String CharArrayToString(char[] chars){
+        StringBuilder str = new StringBuilder();
+        for (char aChar : chars) str.append(aChar);
+        return str.toString();
+    }
+
     public static void main(String[] args){
         TransformHelper tfh = new TransformHelper();
         System.out.println(tfh.IntArrayToString(tfh.addIntArray(tfh.StringToIntArray("101000000000000000000000000"),

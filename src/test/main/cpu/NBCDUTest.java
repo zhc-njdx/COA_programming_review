@@ -1,11 +1,13 @@
-package util;
+package cpu;
 
 import cpu.nbcdu.NBCDU;
 import org.junit.Test;
+import util.DataType;
+import util.Transform;
 
 import static org.junit.Assert.assertEquals;
 
-public class NBCDTest {
+public class NBCDUTest {
     private final NBCDU nbcdu = new NBCDU();
     private final Transform transformer = new Transform();
     private DataType src;
